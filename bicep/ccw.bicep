@@ -114,6 +114,9 @@ module ccwBastion './bastion.bicep' = if (deploy_bastion) {
   }
 }
 
+param osDiskSku string
+param diskSku string
+
 module ccwVM './vm.bicep' = if (!infrastructureOnly) {
   name: 'ccwVM-cyclecloud'
   params: {
@@ -122,7 +125,7 @@ module ccwVM './vm.bicep' = if (!infrastructureOnly) {
     networkInterfacesTags: getTags('Microsoft.Network/networkInterfaces', tags)
     name: ccVMName
     deployScript: loadTextContent('./install.sh')
-    osDiskSku: 'StandardSSD_LRS'
+    osDiskSku: osDiskSku
     image: {
       plan: cyclecloudBaseImage
       ref: contains(cyclecloudBaseImage, '/')
@@ -145,7 +148,7 @@ module ccwVM './vm.bicep' = if (!infrastructureOnly) {
     dataDisks: [
       {
         name: '${ccVMName}-datadisk0'
-        disksku: 'Premium_LRS'
+        disksku: diskSku
         size: split(cyclecloudBaseImage, ':')[0] == 'azurecyclecloud' ? 0 : 128
         caching: 'ReadWrite'
         createOption: split(cyclecloudBaseImage, ':')[0] == 'azurecyclecloud' ? 'FromImage' : 'Empty'
