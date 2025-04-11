@@ -42,6 +42,9 @@ param branch string = 'main'
 param projectVersion string = '2025.02.06'
 //Internal developer use only: set true use custom CycleCloud release build 
 param manualInstall bool = false
+param cyclecloudBaseImage string = 'azurecyclecloud:azure-cyclecloud:cyclecloud8-gen2:8.7.120250213'
+param osDiskSku string = 'StandardSSD_LRS'
+param diskSku string = 'Premium_LRS'
 
 resource ccwResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroup
@@ -83,5 +86,8 @@ module makeCCWresources 'ccw.bicep' = {
     manualInstall: manualInstall
     acceptMarketplaceTerms: acceptMarketplaceTerms
     ood: ood
+    cyclecloudBaseImage: cyclecloudBaseImage
+    osDiskSku: osDiskSku
+    diskSku: diskSku
   }
 }
