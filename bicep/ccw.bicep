@@ -21,12 +21,14 @@ param additionalFilesystem types.additionalFilesystem_t
 param network types.vnet_t 
 param storagePrivateDnsZone types.storagePrivateDnsZone_t
 param clusterInitSpecs types.cluster_init_param_t
-param slurmSettings types.slurmSettings_t 
+param clusterType string
+param clusterSettings types.clusterSettings_t
 param schedulerNode types.scheduler_t
 param loginNodes types.login_t
 param htc types.htc_t
 param hpc types.hpc_t
 param gpu types.hpc_t
+param execute types.execute_t
 param tags types.resource_tags_t
 @secure()
 param databaseAdminPassword string
@@ -195,7 +197,7 @@ module ccwStorage './storage.bicep' = {
   }
 }
 
-var create_database = contains(slurmSettings, 'databaseAdminPassword')
+var create_database = contains(clusterSettings, 'databaseAdminPassword')
 var db_name = 'ccw-mysqldb-${uniqueString(az.resourceGroup().id)}'
 
 module mySQLccw './mysql.bicep' = if (create_database) {
@@ -320,7 +322,9 @@ var ccwClusterInitSpec = {
   type: 'gitHubReleaseURL'
   gitHubReleaseURL: uri('https://github.com/Azure/cyclecloud-slurm-workspace/releases/tag/', projectVersion)
   spec: 'default'
-  target: ['login', 'scheduler', 'htc', 'hpc', 'gpu', 'dynamic']
+  target: clusterType == 'slurm'
+    ? ['login', 'scheduler', 'htc', 'hpc', 'gpu', 'dynamic']
+    : clusterType == 'pbs' ? ['scheduler', 'execute'] : []
 }
 
 // Projects <= 2025.02.06 have the nvme and pyxis logic embedded in the ccw cluster init spec
@@ -329,7 +333,8 @@ var ccwClusterInitSpec = {
 var requiredClusterInitSpecs = [ccwClusterInitSpec]
 output clusterInitSpecs types.cluster_init_param_t = union(requiredClusterInitSpecs, clusterInitSpecs)
 
-output slurmSettings types.slurmSettings_t = slurmSettings
+output clusterType string = clusterType
+output clusterSettings types.clusterSettings_t = clusterSettings
 
 output schedulerNode types.scheduler_t = schedulerNode
 
@@ -344,6 +349,12 @@ output partitions types.partitions_t = {
   }
   hpc: hpc
   gpu: gpu
+  execute: {
+    sku: execute.sku
+    maxCores: execute.maxCores
+    osImage: execute.osImage
+    useSpot: execute.?useSpot ?? false
+  }
 }
 
 var envNameToCloudMap = {
