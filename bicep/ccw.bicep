@@ -22,12 +22,14 @@ param additionalFilesystem types.additionalFilesystem_t
 param network types.vnet_t 
 param storagePrivateDnsZone types.storagePrivateDnsZone_t
 param clusterInitSpecs types.cluster_init_param_t
-param slurmSettings types.slurmSettings_t 
+param clusterType string
+param clusterSettings types.clusterSettings_t
 param schedulerNode types.scheduler_t
 param loginNodes types.login_t
 param htc types.htc_t
 param hpc types.hpc_t
 param gpu types.hpc_t
+param execute types.execute_t
 param tags types.resource_tags_t
 @secure()
 param databaseAdminPassword string
@@ -196,7 +198,7 @@ module ccwStorage './storage.bicep' = {
   }
 }
 
-var create_database = contains(slurmSettings, 'databaseAdminPassword')
+var create_database = contains(clusterSettings, 'databaseAdminPassword')
 var db_name = 'ccw-mysqldb-${uniqueString(az.resourceGroup().id)}'
 
 module mySQLccw './mysql.bicep' = if (create_database) {
@@ -324,7 +326,9 @@ var ccwClusterInitSpec = {
   type: 'gitHubReleaseURL'
   gitHubReleaseURL: uri('https://github.com/Azure/cyclecloud-slurm-workspace/releases/tag/', projectVersion)
   spec: 'default'
-  target: ['login', 'scheduler', 'htc', 'hpc', 'gpu', 'dynamic']
+  target: clusterType == 'slurm'
+    ? ['login', 'scheduler', 'htc', 'hpc', 'gpu', 'dynamic']
+    : clusterType == 'pbs' ? ['scheduler', 'execute'] : []
 }
 
 var pyxisClusterInitSpec = {
@@ -339,7 +343,8 @@ var requiredClusterInitSpecs = [ccwClusterInitSpec, pyxisClusterInitSpec]
 
 output clusterInitSpecs types.cluster_init_param_t = union(requiredClusterInitSpecs, clusterInitSpecs)
 
-output slurmSettings types.slurmSettings_t = slurmSettings
+output clusterType string = clusterType
+output clusterSettings types.clusterSettings_t = clusterSettings
 
 output schedulerNode types.scheduler_t = schedulerNode
 
@@ -354,6 +359,12 @@ output partitions types.partitions_t = {
   }, contains(htc,'availabilityZone') ? { availabilityZone: htc.?availabilityZone } : {})
   hpc: hpc
   gpu: gpu
+  execute: {
+    sku: execute.sku
+    maxCores: execute.maxCores
+    osImage: execute.osImage
+    useSpot: execute.?useSpot ?? false
+  }
 }
 
 var envNameToCloudMap = {
@@ -409,4 +420,5 @@ output files object = {
   create_cc_param_py: loadTextContent('./files-to-load/encoded/create_cc_param.py.base64')
   cyclecloud_install_py: loadTextContent('./files-to-load/encoded/cyclecloud_install.py.base64')
   initial_params_json: loadTextContent('./files-to-load/encoded/initial_params.json.base64')
+  initial_pbs_params_json: loadTextContent('./files-to-load/encoded/initial_pbs_params.json.base64')
 }

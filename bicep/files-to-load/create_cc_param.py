@@ -55,9 +55,9 @@ def set_slurm_params(params, dbPassword, outputs):
     #params['slurm'] #is this the slurm version??? no, so what is it?
     params['SchedulerMachineType'] = outputs['schedulerNode']['value']['sku']
     params['SchedulerImageName'] = outputs['schedulerNode']['value']['osImage']
-    params['configuration_slurm_version'] = outputs['slurmSettings']['value']['version']
-    # if outputs['slurmSettings']['value']['canUseSlurmHA']:
-    #     params['configuration_slurm_ha_enabled'] = outputs['slurmSettings']['value']['slurmHA']
+    params['configuration_slurm_version'] = outputs['clusterSettings']['value']['version']
+    # if outputs['clusterSettings']['value']['canUseSlurmHA']:
+    #     params['configuration_slurm_ha_enabled'] = outputs['clusterSettings']['value']['slurmHA']
     params['configuration_slurm_accounting_enabled'] = bool(outputs['databaseInfo']['value'])
     if params['configuration_slurm_accounting_enabled']:
         params['configuration_slurm_accounting_user'] = outputs['databaseInfo']['value']['databaseUser']
@@ -71,7 +71,7 @@ def set_slurm_params(params, dbPassword, outputs):
     params['loginMachineType'] = (outputs['loginNodes']['value']['sku']).strip()
     params['NumberLoginNodes'] = int(outputs['loginNodes']['value']['initialNodes'])
     params['LoginImageName'] = outputs['loginNodes']['value']['osImage']
-    params['EnableNodeHealthChecks'] = outputs['slurmSettings']['value']['healthCheckEnabled']
+    params['EnableNodeHealthChecks'] = outputs['clusterSettings']['value']['healthCheckEnabled']
 
     #Execute node tags
     params['NodeTags'] = outputs['nodeArrayTags']['value']
@@ -91,6 +91,51 @@ def set_slurm_params(params, dbPassword, outputs):
     params['AdditionalNFS'] = outputs['filerInfoFinal']['value']['additional']['type'] != 'disabled'
     if params['AdditionalNFS']:
         params['AdditionalNFSType'] = 'nfs' if outputs['filerInfoFinal']['value']['additional']['type'] in ['nfs-existing','anf-new'] else 'lustre'
+        params['AdditionalNFSMountPoint'] = outputs['filerInfoFinal']['value']['additional']['mountPath']
+        params['AdditionalNFSExportPath'] = outputs['filerInfoFinal']['value']['additional']['exportPath']
+        params['AdditionalNFSMountOptions'] = outputs['filerInfoFinal']['value']['additional']['mountOptions']
+        params['AdditionalNFSAddress'] = outputs['filerInfoFinal']['value']['additional']['ipAddress']
+
+
+def set_pbs_params(params, outputs):
+    params['Region'] = outputs['location']['value']
+    if outputs['vnet']['value']['type'] == 'new':
+        subnetID = outputs['vnet']['value']['computeSubnetId']
+        subnet_toks = subnetID.split("/")
+        if len(subnet_toks) >= 11:
+            params['SubnetId'] = "/".join([subnet_toks[4], subnet_toks[8], subnet_toks[10]])
+        else:
+            print(f"Unexpected subnet id {subnetID} - passing as SubnetId directly instead of resource_group/vnet_name/subnet_name", file=sys.stderr)
+            params['SubnetId'] = subnetID
+    else:
+        params['SubnetId'] = '/'.join([outputs['vnet']['value']['rg'], outputs['vnet']['value']['name'], outputs['vnet']['value']['computeSubnetName']])
+
+    #Execute
+    params['ExecuteMachineType'] = outputs['partitions']['value']['execute']['sku']
+    params['MaxExecuteCoreCount'] = int(outputs['partitions']['value']['execute']['maxCores'])
+    params['ImageName'] = outputs['partitions']['value']['execute']['osImage']
+    params['UseLowPrio'] = outputs['partitions']['value']['execute']['useSpot']
+
+    #scheduler node
+    params['serverMachineType'] = outputs['schedulerNode']['value']['sku']
+    params['SchedulerImageName'] = outputs['schedulerNode']['value']['osImage']
+    params['PBSVersion'] = outputs['clusterSettings']['value']['version']
+
+    #login node(s)
+    params['NumberLoginNodes'] = int(outputs['loginNodes']['value']['initialNodes'])
+    params['EnableNodeHealthChecks'] = outputs['clusterSettings']['value']['healthCheckEnabled']
+
+    #Network Attached Storage
+    if outputs['filerInfoFinal']['value']['home']['type'] == 'nfs-new':
+        params['NFSType'] = 'Builtin'
+        params['FilesystemSize'] = outputs['filerInfoFinal']['value']['home']['nfsCapacityInGb']
+    else:
+        params['NFSSharedExportPath'] = outputs['filerInfoFinal']['value']['home']['exportPath']
+        params['NFSSharedMountOptions'] = outputs['filerInfoFinal']['value']['home']['mountOptions']
+        params['NFSAddress'] = outputs['filerInfoFinal']['value']['home']['ipAddress']
+
+    params['AdditionalNAS'] = outputs['filerInfoFinal']['value']['additional']['type'] != 'disabled'
+    if params['AdditionalNAS']:
         params['AdditionalNFSMountPoint'] = outputs['filerInfoFinal']['value']['additional']['mountPath']
         params['AdditionalNFSExportPath'] = outputs['filerInfoFinal']['value']['additional']['exportPath']
         params['AdditionalNFSMountOptions'] = outputs['filerInfoFinal']['value']['additional']['mountOptions']
@@ -193,25 +238,30 @@ def main():
     subparsers = parser.add_subparsers()
     ccw_parser = subparsers.add_parser("slurm")
     # TODO this needs to be by cluster type
-    target_params = {
+    ccw_parser.set_defaults(cluster_type="slurm", target_params={
         "login": "LoginClusterInitSpecs",
         "gpu": "GPUClusterInitSpecs",
         "hpc": "HPCClusterInitSpecs",
         "htc": "HTCClusterInitSpecs",
         "scheduler": "SchedulerClusterInitSpecs",
-        "dynamic": "DynamicClusterInitSpecs",
-        "ood": "ClusterInitSpecs"
-    }
-    ccw_parser.set_defaults(cluster_type="slurm", target_params=target_params)
+        "dynamic": "DynamicClusterInitSpecs"})
     ccw_parser.add_argument("--dbPassword", dest="dbPassword", default="", help="MySQL database password")
     
+    pbs_parser = subparsers.add_parser("pbs")
+    pbs_parser.set_defaults(cluster_type="pbs", target_params={
+        "scheduler": "serverClusterInitSpecs",
+        "execute": "ExecuteClusterInitSpecs"})
+
     ood_parser = subparsers.add_parser("ood")
-    ood_parser.set_defaults(cluster_type="ood", target_params=target_params)
+    ood_parser.set_defaults(cluster_type="ood", target_params={
+        "ood": "ClusterInitSpecs"})
     
     args = parser.parse_args()
 
     if args.cluster_type == "slurm":
         output_params = get_json_dict('initial_params.json')
+    elif args.cluster_type == "pbs":
+        output_params = get_json_dict('initial_pbs_params.json')
     else:
         output_params = {}
     ccw_outputs = get_json_dict('ccwOutputs.json')
@@ -220,6 +270,8 @@ def main():
     set_cluster_init_params(output_params, specs, args.cluster_type, args.target_params)
     if args.cluster_type == "slurm":
         set_slurm_params(output_params, args.dbPassword, ccw_outputs)
+    elif args.cluster_type == "pbs":
+        set_pbs_params(output_params, ccw_outputs)
     else:
         set_ood_params(output_params, ccw_outputs)
     print(json.dumps(output_params, indent=4))
