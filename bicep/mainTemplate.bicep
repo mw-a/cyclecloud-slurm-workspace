@@ -17,12 +17,13 @@ param additionalFilesystem types.additionalFilesystem_t = { type: 'disabled' }
 param network types.vnet_t
 param storagePrivateDnsZone types.storagePrivateDnsZone_t
 param clusterInitSpecs types.cluster_init_param_t = []
-param slurmSettings types.slurmSettings_t = { startCluster: true, version: '23.11.7-1', healthCheckEnabled: false }
+param clusterSettings types.clusterSettings_t = { startCluster: true, version: '23.11.7-1', healthCheckEnabled: false }
 param schedulerNode types.scheduler_t
-param loginNodes types.login_t
-param htc types.htc_t
-param hpc types.hpc_t
-param gpu types.hpc_t
+param loginNodes types.login_t = { initialNodes: 0, maxNodes: 0, osImage: '', sku: '' }
+param htc types.htc_t = { maxNodes: 0, osImage: '', sku: '' }
+param hpc types.hpc_t = { maxNodes: 0, osImage: '', sku: '' }
+param gpu types.hpc_t = { maxNodes: 0, osImage: '', sku: '' }
+param execute types.execute_t = { maxCores: 0, osImage: '', sku: '', useSpot: false }
 param tags types.resource_tags_t 
 @secure()
 param databaseAdminPassword string = ''
@@ -46,6 +47,7 @@ param manualInstall bool = false
 param cyclecloudBaseImage string = 'azurecyclecloud:azure-cyclecloud:cyclecloud8-gen2:8.7.120250213'
 param osDiskSku string = 'StandardSSD_LRS'
 param diskSku string = 'Premium_LRS'
+param clusterType string = 'slurm'
 
 resource ccwResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroup
@@ -68,12 +70,14 @@ module makeCCWresources 'ccw.bicep' = {
     network: network
     storagePrivateDnsZone: storagePrivateDnsZone
     clusterInitSpecs: clusterInitSpecs
-    slurmSettings: slurmSettings
+    clusterType: clusterType
+    clusterSettings: clusterSettings
     schedulerNode: schedulerNode
     loginNodes: loginNodes
     htc: htc
     hpc: hpc
     gpu: gpu
+    execute: execute
     storedKey: storedKey
     ccVMName: ccVMName
     ccVMSize: ccVMSize

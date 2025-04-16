@@ -177,7 +177,7 @@ type resource_tags_t = {
 }
 
 @export()
-type slurmSettings_t = {
+type clusterSettings_t = {
   startCluster: bool
   version: string
   healthCheckEnabled: bool
@@ -224,10 +224,27 @@ type hpc_t = {
 }
 
 @export()
+type execute_t = {
+  sku: string
+  osImage: string
+  maxCores: int
+  useSpot: bool?
+}
+
+@export()
+type execute_output_t = {
+  sku: string
+  osImage: string
+  maxCores: int
+  useSpot: bool
+}
+
+@export()
 type partitions_t = {
   htc: htc_output_t
   hpc: hpc_t //if any property becomes optional, create a *_output_t type
   gpu: hpc_t //if any property becomes optional, create a *_output_t type
+  execute: execute_output_t
 }
 
 @export()
@@ -292,7 +309,7 @@ type ood_enabled_t = {
 @export()
 @discriminator('type')
 type oodConfig_t = ood_none_t | ood_enabled_t
-type cluster_init_target_t = 'login' | 'scheduler' | 'htc' | 'hpc' | 'gpu' | 'dynamic' | 'ood'
+type cluster_init_target_t = 'login' | 'scheduler' | 'htc' | 'hpc' | 'gpu' | 'dynamic' | 'ood' | 'execute'
 
 
 type github_cluster_init_t = {

@@ -122,6 +122,7 @@ done
 pushd $ccw_root
 echo "* Extracting deployment output"
 az deployment group show -g $resource_group -n $deployment_name --query properties.outputs > ccwOutputs.json
+CLUSTER_TYPE=$(jq -r .clusterType.value $ccw_root/ccwOutputs.json)
 BRANCH=$(jq -r .branch.value $ccw_root/ccwOutputs.json)
 MANUAL=$(jq -r .manualInstall.value $ccw_root/ccwOutputs.json)
 
@@ -175,14 +176,22 @@ CYCLECLOUD_USERNAME=$(jq -r .adminUsername.value ccwOutputs.json)
 CYCLECLOUD_PASSWORD=$(jq -r .adminPassword "$SECRETS_FILE_PATH")
 CYCLECLOUD_USER_PUBKEY=$(jq -r .publicKey.value ccwOutputs.json)
 CYCLECLOUD_STORAGE="$(jq -r .storageAccountName.value ccwOutputs.json)"
-SLURM_CLUSTER_NAME=$(jq -r .clusterName.value ccwOutputs.json)
+MAIN_CLUSTER_NAME=$(jq -r .clusterName.value ccwOutputs.json)
 
 # Copy the Slurm template and deployment outputs to the admin user's home directory
 ADMIN_USER_HOME_DIR="/home/${CYCLECLOUD_USERNAME}"
-SLURM_TEMPLATE_PATH=$(find /opt/cycle_server/system/work/.plugins_expanded/.expanded/cloud*/plugins/cloud/initial_data/templates/slurm/slurm_template_*.txt)
-mkdir -p "${ADMIN_USER_HOME_DIR}/${SLURM_CLUSTER_NAME}"
-cp "${SLURM_TEMPLATE_PATH}" "${ADMIN_USER_HOME_DIR}/${SLURM_CLUSTER_NAME}/slurm_template.txt"
-cp ccwOutputs.json "${ADMIN_USER_HOME_DIR}/${SLURM_CLUSTER_NAME}/deployment.json"
+mkdir -p "${ADMIN_USER_HOME_DIR}/${MAIN_CLUSTER_NAME}"
+case "$CLUSTER_TYPE" in
+	slurm)
+		CLUSTER_PROJ_NAME=slurm
+		;;
+	pbs)
+		CLUSTER_PROJ_NAME=pbspro
+		;;
+esac
+TEMPLATE_PATH=$(find /opt/cycle_server/system/work/.plugins_expanded/.expanded/cloud*/plugins/cloud/initial_data/templates/$CLUSTER_PROJ_NAME/${CLUSTER_PROJ_NAME}_template_*.txt)
+cp "${TEMPLATE_PATH}" "${ADMIN_USER_HOME_DIR}/${MAIN_CLUSTER_NAME}/cluster_template.txt"
+cp ccwOutputs.json "${ADMIN_USER_HOME_DIR}/${MAIN_CLUSTER_NAME}/deployment.json"
 
 if [[ "$MANUAL" == "true" ]]; then
     USE_INSIDERS_BUILD="false"
@@ -260,7 +269,7 @@ cycle_server start --wait
 # this will block until CC responds
 curl -k https://localhost
 
-cyclecloud initialize --batch --url=https://localhost --username=${CYCLECLOUD_USERNAME} --password="${CYCLECLOUD_PASSWORD}" --verify-ssl=false --name=$SLURM_CLUSTER_NAME
+cyclecloud initialize --batch --url=https://localhost --username=${CYCLECLOUD_USERNAME} --password="${CYCLECLOUD_PASSWORD}" --verify-ssl=false --name=$MAIN_CLUSTER_NAME
 echo "CC CLI initialize successful"
 
 # Ensure CC properly initializes
@@ -281,7 +290,15 @@ while  [ -z "$lockerStatus" ]; do
 done
 
 # needs to be done after initialization, as we now call fetch/upload
-(python3 create_cc_param.py slurm --dbPassword="${DATABASE_ADMIN_PASSWORD}") > slurm_params.json 
+case "$CLUSTER_TYPE" in
+	slurm)
+		(python3 create_cc_param.py slurm --dbPassword="${DATABASE_ADMIN_PASSWORD}") > cluster_params.json
+		;;
+
+	pbs)
+		(python3 create_cc_param.py pbs) > cluster_params.json
+		;;
+esac
 
 if [[ -n $(/opt/cycle_server/./cycle_server execute 'select * from Cloud.Cluster where ClusterName=="slurm_template_3.0.11"') ]]; then 
     cp availability_zones.json /opt/cycle_server/config/data/
@@ -294,11 +311,11 @@ if [[ -n $(/opt/cycle_server/./cycle_server execute 'select * from Cloud.Cluster
 fi
 
 # copying template parameters file to admin user's home directory
-cp slurm_params.json "${ADMIN_USER_HOME_DIR}/${SLURM_CLUSTER_NAME}/slurm_params.json"
+cp cluster_params.json "${ADMIN_USER_HOME_DIR}/${MAIN_CLUSTER_NAME}/cluster_params.json"
 
-SLURM_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="Slurm"' | jq -r '.[0].Version')
+CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
 
-cyclecloud create_cluster slurm_template_${SLURM_PROJ_VERSION} $SLURM_CLUSTER_NAME -p slurm_params.json
+cyclecloud create_cluster ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} $MAIN_CLUSTER_NAME -p cluster_params.json
 echo "CC create_cluster successful"
 
 ## BEGIN temporary login node max count patch
@@ -308,7 +325,7 @@ LOGIN_NODES_MAX_COUNT=$(jq -r '.loginNodes.value.maxNodes' ccwOutputs.json)
 python3 -c "import sys; int(sys.argv[1])" $LOGIN_NODES_MAX_COUNT
 /opt/cycle_server/./cycle_server execute "UPDATE Cloud.Node \
                                           SET MaxCount=${LOGIN_NODES_MAX_COUNT} \
-                                          WHERE ClusterName==\"$SLURM_CLUSTER_NAME\" && Name==\"login\""
+                                          WHERE ClusterName==\"$MAIN_CLUSTER_NAME\" && Name==\"login\""
 ## END temporary login node max count patch
 
 if [ $INCLUDE_OOD == true ]; then
@@ -336,7 +353,7 @@ while [ $(/opt/cycle_server/./cycle_server execute --format json "
                         OUTER JOIN Azure.MachineType M
                         ON  MachineType === M.Name &&
                             Region === M.Location
-                        WHERE (ClusterName == "OpenOnDemand" || ClusterName == \"$SLURM_CLUSTER_NAME\")" | jq -r ".[] | select(.MachineType == null).Name" | wc -l) != 0 ]; do
+                        WHERE (ClusterName == "OpenOnDemand" || ClusterName == \"$MAIN_CLUSTER_NAME\")" | jq -r ".[] | select(.MachineType == null).Name" | wc -l) != 0 ]; do
     echo "Waiting for Azure.MachineType to be populated..."
     sleep 10
 done
@@ -348,7 +365,7 @@ echo All Azure.MachineType records are loaded.
  FROM Cloud.Node
  INNER JOIN Azure.MachineType M 
  ON M.Name===MachineType && M.Location===Region
- WHERE ClusterName==\"$SLURM_CLUSTER_NAME\"" > /tmp/accel_network.txt
+ WHERE ClusterName==\"$MAIN_CLUSTER_NAME\"" > /tmp/accel_network.txt
  mv /tmp/accel_network.txt /opt/cycle_server/config/data
 
 # it usually takes less than 2 seconds, so before starting the longer timeouts, optimistically sleep.
@@ -356,13 +373,13 @@ sleep 2
 echo Waiting for accelerated network records to be imported
 timeout 360s bash -c 'until (! ls /opt/cycle_server/config/data/*.txt); do sleep 10; done'
 
-START_SLURM_CLUSTER=$(jq -r .slurmSettings.value.startCluster ccwOutputs.json)
-if [ "$START_SLURM_CLUSTER" == "true" ]; then
-    cyclecloud start_cluster "$SLURM_CLUSTER_NAME"
-    echo "CC start_cluster for $SLURM_CLUSTER_NAME successful"
+START_MAIN_CLUSTER=$(jq -r .clusterSettings.value.startCluster ccwOutputs.json)
+if [ "$START_MAIN_CLUSTER" == "true" ]; then
+    cyclecloud start_cluster "$MAIN_CLUSTER_NAME"
+    echo "CC start_cluster for $MAIN_CLUSTER_NAME successful"
 fi
-rm -f slurm_params.json
-echo "Deleted Slurm input parameters file" 
+rm -f cluster_params.json
+echo "Deleted cluster input parameters file"
 
 if [ $INCLUDE_OOD == true ]; then
     START_OOD_CLUSTER=$(jq -r .ood.value.startCluster ccwOutputs.json)
