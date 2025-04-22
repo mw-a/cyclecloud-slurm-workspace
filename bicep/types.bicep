@@ -202,6 +202,7 @@ type clusterSettings_t = {
 type scheduler_t = {
   sku: string
   osImage: string
+  publicIp: bool?
 }
 
 @export()
@@ -244,6 +245,7 @@ type execute_t = {
   osImage: string
   maxCores: int
   useSpot: bool?
+  publicIp: bool?
 }
 
 @export()
@@ -252,6 +254,7 @@ type execute_output_t = {
   osImage: string
   maxCores: int
   useSpot: bool
+  publicIp: bool
 }
 
 @export()
