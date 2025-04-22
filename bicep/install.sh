@@ -296,6 +296,16 @@ case "$CLUSTER_TYPE" in
 		;;
 
 	pbs)
+		#cyclecloud project fetch https://github.com/mw-a/cyclecloud-pbspro/tree/non-ssd cyclecloud-pbspro
+		CLUSTER_PROJ_VERSION=non-ssd
+		wget -O cyclecloud-pbspro.zip https://github.com/mw-a/cyclecloud-pbspro/archive/refs/heads/$CLUSTER_PROJ_VERSION.zip
+		dnf install -y unzip
+		unzip -o cyclecloud-pbspro.zip
+		pushd cyclecloud-pbspro-$CLUSTER_PROJ_VERSION
+		./build.sh
+		cyclecloud project upload azure-storage
+		cyclecloud import_template -c OpenPBS -f templates/openpbs.txt ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
+		popd
 		(python3 create_cc_param.py pbs) > cluster_params.json
 		;;
 esac
@@ -313,6 +323,7 @@ fi
 # copying template parameters file to admin user's home directory
 cp cluster_params.json "${ADMIN_USER_HOME_DIR}/${MAIN_CLUSTER_NAME}/cluster_params.json"
 
+[ -n "$CLUSTER_PROJ_VERSION" ] || \
 CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
 
 cyclecloud create_cluster ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} $MAIN_CLUSTER_NAME -p cluster_params.json

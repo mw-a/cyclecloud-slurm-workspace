@@ -124,6 +124,12 @@ def set_pbs_params(params, outputs):
     if outputs.get('schedulerNode', {}).get('value', {}).get('publicIp') is not None:
         params['UsePublicNetwork'] = outputs['schedulerNode']['value']['publicIp']
     params['PBSVersion'] = outputs['clusterSettings']['value']['version']
+    if outputs.get('clusterSettings', {}).get('value', {}).get('bootDiskStorageSKU'):
+        params['BootDiskStorageSKU'] = outputs['clusterSettings']['value']['bootDiskStorageSKU']
+    if outputs.get('schedulerNode', {}).get('value', {}).get('sharedDiskStorageSKU'):
+        params['SharedDiskStorageSKU'] = outputs['schedulerNode']['value']['sharedDiskStorageSKU']
+    if outputs.get('schedulerNode', {}).get('value', {}).get('schedDiskStorageSKU'):
+        params['SchedDiskStorageSKU'] = outputs['schedulerNode']['value']['schedDiskStorageSKU']
 
     #login node(s)
     params['NumberLoginNodes'] = int(outputs['loginNodes']['value']['initialNodes'])
