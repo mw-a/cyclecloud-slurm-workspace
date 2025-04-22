@@ -196,6 +196,7 @@ type clusterSettings_t = {
   startCluster: bool
   version: string
   healthCheckEnabled: bool
+  bootDiskStorageSKU: string?
 }
 
 @export()
@@ -203,6 +204,8 @@ type scheduler_t = {
   sku: string
   osImage: string
   publicIp: bool?
+  schedDiskStorageSKU: string?
+  sharedDiskStorageSKU: string?
 }
 
 @export()

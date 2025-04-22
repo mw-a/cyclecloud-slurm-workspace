@@ -295,15 +295,24 @@ done
 # needs to be done after initialization, as we now call fetch/upload
 case "$CLUSTER_TYPE" in
 	slurm)
+		CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
 		(python3 create_cc_param.py slurm --dbPassword="${DATABASE_ADMIN_PASSWORD}") > cluster_params.json
 		;;
 
 	pbs)
+		#cyclecloud project fetch https://github.com/mw-a/cyclecloud-pbspro/tree/non-ssd cyclecloud-pbspro
+		CLUSTER_PROJ_VERSION=non-ssd
+		wget -O cyclecloud-pbspro.zip https://github.com/mw-a/cyclecloud-pbspro/archive/refs/heads/$CLUSTER_PROJ_VERSION.zip
+		dnf install -y unzip
+		unzip -o cyclecloud-pbspro.zip
+		pushd cyclecloud-pbspro-$CLUSTER_PROJ_VERSION
+		./build.sh
+		cyclecloud project upload azure-storage
+		cyclecloud import_template -c OpenPBS -f templates/openpbs.txt ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
+		popd
 		(python3 create_cc_param.py pbs) > cluster_params.json
 		;;
 esac
-
-CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
 
 # copying template parameters file to admin user's home directory
 PARAMS_COPY="${HOME_CLUSTER_DIR}/cluster_params.json"
