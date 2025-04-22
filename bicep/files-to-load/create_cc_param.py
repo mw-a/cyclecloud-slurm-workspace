@@ -115,10 +115,13 @@ def set_pbs_params(params, outputs):
     params['MaxExecuteCoreCount'] = int(outputs['partitions']['value']['execute']['maxCores'])
     params['ImageName'] = outputs['partitions']['value']['execute']['osImage']
     params['UseLowPrio'] = outputs['partitions']['value']['execute']['useSpot']
+    if outputs.get('schedulerNode', {}).get('value', {}).get('publicIp'):
+        params['ExecuteNodesPublic'] = outputs['partitions']['value']['execute']['publicIp']
 
     #scheduler node
     params['serverMachineType'] = outputs['schedulerNode']['value']['sku']
     params['SchedulerImageName'] = outputs['schedulerNode']['value']['osImage']
+    params['UsePublicNetwork'] = outputs['schedulerNode']['value']['publicIp']
     params['PBSVersion'] = outputs['clusterSettings']['value']['version']
 
     #login node(s)
