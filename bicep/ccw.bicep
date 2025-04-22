@@ -364,6 +364,7 @@ output partitions types.partitions_t = {
     maxCores: execute.maxCores
     osImage: execute.osImage
     useSpot: execute.?useSpot ?? false
+    publicIp: execute.?publicIp ?? false
   }
 }
 
