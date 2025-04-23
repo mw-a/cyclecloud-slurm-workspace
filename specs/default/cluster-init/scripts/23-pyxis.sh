@@ -3,6 +3,8 @@ set -e
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$script_dir/../files/common.sh" 
 
+is_slurm || exit 0
+
 PYXIS_VERSION=0.20.0
 SHARED_DIR=/sched/pyxis
 
