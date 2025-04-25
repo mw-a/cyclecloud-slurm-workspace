@@ -126,8 +126,6 @@ def set_pbs_params(params, outputs):
     params['PBSVersion'] = outputs['clusterSettings']['value']['version']
     if outputs.get('clusterSettings', {}).get('value', {}).get('bootDiskStorageSKU'):
         params['BootDiskStorageSKU'] = outputs['clusterSettings']['value']['bootDiskStorageSKU']
-    if outputs.get('schedulerNode', {}).get('value', {}).get('sharedDiskStorageSKU'):
-        params['SharedDiskStorageSKU'] = outputs['schedulerNode']['value']['sharedDiskStorageSKU']
     if outputs.get('schedulerNode', {}).get('value', {}).get('schedDiskStorageSKU'):
         params['SchedDiskStorageSKU'] = outputs['schedulerNode']['value']['schedDiskStorageSKU']
     if outputs.get('schedulerNode', {}).get('value', {}).get('schedCapacityInGb'):
@@ -138,16 +136,22 @@ def set_pbs_params(params, outputs):
     params['EnableNodeHealthChecks'] = outputs['clusterSettings']['value']['healthCheckEnabled']
 
     #Network Attached Storage
-    if outputs['filerInfoFinal']['value']['home']['type'] == 'nfs-new':
-        params['NFSType'] = 'Builtin'
+    params['UseBuiltinShared'] = outputs['filerInfoFinal']['value']['home']['type'] == 'nfs-new' 
+    if params['UseBuiltinShared']:
         params['FilesystemSize'] = outputs['filerInfoFinal']['value']['home']['nfsCapacityInGb']
+        if outputs.get('schedulerNode', {}).get('value', {}).get('sharedDiskStorageSKU'):
+            params['SharedDiskStorageSKU'] = outputs['schedulerNode']['value']['sharedDiskStorageSKU']
     else:
+        params['NFSType'] = 'nfs' if outputs['filerInfoFinal']['value']['home']['type'] in ['nfs-existing','anf-new'] else 'lustre'
+        # We no longer need to handle these differently based on the fs type, as each
+        # fs module's common outputs map to these.
         params['NFSSharedExportPath'] = outputs['filerInfoFinal']['value']['home']['exportPath']
         params['NFSSharedMountOptions'] = outputs['filerInfoFinal']['value']['home']['mountOptions']
         params['NFSAddress'] = outputs['filerInfoFinal']['value']['home']['ipAddress']
 
-    params['AdditionalNAS'] = outputs['filerInfoFinal']['value']['additional']['type'] != 'disabled'
-    if params['AdditionalNAS']:
+    params['AdditionalNFS'] = outputs['filerInfoFinal']['value']['additional']['type'] != 'disabled'
+    if params['AdditionalNFS']:
+        params['AdditionalNFSType'] = 'nfs' if outputs['filerInfoFinal']['value']['additional']['type'] in ['nfs-existing','anf-new'] else 'lustre'
         params['AdditionalNFSMountPoint'] = outputs['filerInfoFinal']['value']['additional']['mountPath']
         params['AdditionalNFSExportPath'] = outputs['filerInfoFinal']['value']['additional']['exportPath']
         params['AdditionalNFSMountOptions'] = outputs['filerInfoFinal']['value']['additional']['mountOptions']
