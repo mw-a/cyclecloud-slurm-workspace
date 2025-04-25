@@ -130,6 +130,8 @@ def set_pbs_params(params, outputs):
         params['SharedDiskStorageSKU'] = outputs['schedulerNode']['value']['sharedDiskStorageSKU']
     if outputs.get('schedulerNode', {}).get('value', {}).get('schedDiskStorageSKU'):
         params['SchedDiskStorageSKU'] = outputs['schedulerNode']['value']['schedDiskStorageSKU']
+    if outputs.get('schedulerNode', {}).get('value', {}).get('schedCapacityInGb'):
+        params['SchedFilesystemSize'] = outputs['schedulerNode']['value']['schedCapacityInGb']
 
     #login node(s)
     params['NumberLoginNodes'] = int(outputs['loginNodes']['value']['initialNodes'])

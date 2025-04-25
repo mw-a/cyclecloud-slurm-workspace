@@ -190,6 +190,7 @@ type scheduler_t = {
   osImage: string
   publicIp: bool?
   schedDiskStorageSKU: string?
+  schedCapacityInGb: int?
   sharedDiskStorageSKU: string?
 }
 

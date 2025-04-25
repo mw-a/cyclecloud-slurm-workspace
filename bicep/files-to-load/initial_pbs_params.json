@@ -31,6 +31,7 @@
     "Region": "swedencentral",
     "ReturnProxy": true,
     "SchedDiskStorageSKU": "Premium_SSD",
+    "SchedFilesystemSize": 1000,
     "SchedulerImageName": "almalinux8",
     "SharedDiskStorageSKU": "Premium_SSD",
     "UseLowPrio": false,
