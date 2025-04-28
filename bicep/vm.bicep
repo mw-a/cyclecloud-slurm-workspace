@@ -16,6 +16,8 @@ param adminPassword string
 param databaseAdminPassword string 
 param adminSshPublicKey string
 param vmSize string
+param identityType types.vm_identity_type_t
+param identities string[]
 param dataDisks array
 param osDiskSize int = 0 //TODO: add to UI
 
@@ -39,6 +41,10 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
   }
 }
 
+var userAssignedIdentities = [for identity in identities: contains(identity, '/') ? identity : '${resourceGroup().id}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${identity}']
+var userAssignedIdentitiesDicts = [for identity in userAssignedIdentities: {'${identity}': {}}]
+var userAssignedIdentitiesDict = reduce(userAssignedIdentitiesDicts, {}, (cur, next) => union(cur, next))
+
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-03-01' = {
   name: name
   location: location
@@ -49,7 +55,8 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-03-01' = {
     name: split(image.plan,':')[2]
   } : null
   identity: {
-    type: 'SystemAssigned'
+    type: identityType
+    userAssignedIdentities: identityType == 'UserAssigned' ? userAssignedIdentitiesDict : null
   }
   properties: {
     hardwareProfile: {
