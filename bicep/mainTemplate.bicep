@@ -11,6 +11,8 @@ param storedKey types.storedKey_t = {id: 'foo', location: 'foo', name:'foo'}
 @maxLength(64)
 param ccVMName string
 param ccVMSize string
+param ccVMIdentityType types.vm_identity_type_t = 'SystemAssigned'
+param ccVMIdentities string[] = []
 param resourceGroup string
 param sharedFilesystem types.sharedFilesystem_t
 param additionalFilesystem types.additionalFilesystem_t = { type: 'disabled' }
@@ -81,6 +83,8 @@ module makeCCWresources 'ccw.bicep' = {
     storedKey: storedKey
     ccVMName: ccVMName
     ccVMSize: ccVMSize
+    ccVMIdentityType: ccVMIdentityType
+    ccVMIdentities: ccVMIdentities
     resourceGroup: resourceGroup
     databaseAdminPassword: databaseAdminPassword
     databaseConfig: databaseConfig
