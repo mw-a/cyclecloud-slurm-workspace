@@ -16,6 +16,8 @@ param adminSshPublicKey string
 param storedKey types.storedKey_t
 param ccVMName string
 param ccVMSize string
+param ccVMIdentityType types.vm_identity_type_t
+param ccVMIdentities string[]
 param resourceGroup string
 param sharedFilesystem types.sharedFilesystem_t
 param additionalFilesystem types.additionalFilesystem_t 
@@ -145,6 +147,8 @@ module ccwVM './vm.bicep' = if (!infrastructureOnly) {
     databaseAdminPassword: databaseAdminPassword
     adminSshPublicKey: publicKey
     vmSize: ccVMSize
+    identityType: ccVMIdentityType
+    identities: ccVMIdentities
     dataDisks: [
       {
         name: '${ccVMName}-datadisk0'

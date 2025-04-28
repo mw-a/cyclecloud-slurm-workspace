@@ -338,3 +338,6 @@ type cluster_init_t = github_cluster_init_t | prestaged_cluster_init_t
 
 @export()
 type cluster_init_param_t = cluster_init_t[]
+
+@export()
+type vm_identity_type_t = 'SystemAssigned' | 'UserAssigned'
