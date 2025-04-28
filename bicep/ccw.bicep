@@ -17,6 +17,8 @@ param storedKey types.storedKey_t
 param ccVMName string
 param ccVMSize string
 param cyclecloudBaseImage string
+param ccVMIdentityType types.vm_identity_type_t
+param ccVMIdentities string[]
 param resourceGroup string
 param entraIdInfo types.entra_t
 param sharedFilesystem types.sharedFilesystem_t
@@ -147,6 +149,8 @@ module ccwVM './vm.bicep' = if (!infrastructureOnly) {
     databaseAdminPassword: databaseAdminPassword
     adminSshPublicKey: publicKey
     vmSize: ccVMSize
+    identityType: ccVMIdentityType
+    identities: ccVMIdentities
     dataDisks: [
       {
         name: '${ccVMName}-datadisk0'
