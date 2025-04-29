@@ -32,7 +32,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   }
 }
 
-var storageBlobPrivateEndpointName = 'ccwstorage-blob-pe'
+var storageBlobPrivateEndpointName = contains(saName, 'ccwstorage') ? 'ccwstorage-blob-pe' : '${saName}-blob-pe'
 
 resource storageBlobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-05-01' = {
   name: storageBlobPrivateEndpointName
