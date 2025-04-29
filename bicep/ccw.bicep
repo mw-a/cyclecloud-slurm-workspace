@@ -223,7 +223,7 @@ module ccwAMLFS 'amlfs.bicep' = if (additionalFilesystem.type == 'aml-new') {
   params: {
     location: location
     tags: getTags('Microsoft.StorageCache/amlFileSystems', tags)
-    name: 'ccw-lustre'
+    name: additionalFilesystem.?name != null ? additionalFilesystem.name : 'ccw-lustre-${uniqueString(az.resourceGroup().id,deployment().name)}'
     subnetId: subnets.?additional.id ?? ''
     sku: additionalFilesystem.?lustreTier
     capacity: additionalFilesystem.?lustreCapacityInTib

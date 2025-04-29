@@ -24,7 +24,7 @@ param infrastructureOnly bool = false
 param availabilityZone availabilityZone_t[]
 
 resource fileSystem 'Microsoft.StorageCache/amlFileSystems@2024-03-01' = if (!infrastructureOnly){
-  name: '${name}-${uniqueString(resourceGroup().id,deployment().name)}'
+  name: name
   location: location
   tags: tags
   sku: {
