@@ -139,6 +139,6 @@ resource cse 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = {
 output fqdn string = '' //contains(vm, 'pip') && vm.pip ? publicIp.properties.dnsSettings.fqdn : ''
 output publicIp string = '' //contains(vm, 'pip') && vm.pip ? publicIp.properties.ipAddress : ''
 output privateIp string = nic.properties.ipConfigurations[0].properties.privateIPAddress
-output principalId string = virtualMachine.identity.principalId
+output principalId string = identityType == 'SystemAssigned' ? virtualMachine.identity.principalId : ''
 //output privateIps array = [ for i in range(0, count): nic[i].properties.ipConfigurations[0].properties.privateIPAddress ]
 //output principalIds array = [ for i in range(0, count): virtualMachine[i].identity.principalId ]
