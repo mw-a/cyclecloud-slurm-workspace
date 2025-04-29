@@ -19,6 +19,7 @@ param entraIdInfo types.entra_t = { type: 'disabled' }
 param sharedFilesystem types.sharedFilesystem_t
 param additionalFilesystem types.additionalFilesystem_t = { type: 'disabled' }
 param network types.vnet_t
+param storageAccountName string = ''
 param storagePrivateDnsZone types.storagePrivateDnsZone_t
 param clusterInitSpecs types.cluster_init_param_t = []
 param clusterSettings types.clusterSettings_t = { startCluster: true, version: '23.11.7-1', healthCheckEnabled: false }
@@ -75,6 +76,7 @@ module makeCCWresources 'ccw.bicep' = {
     additionalFilesystem: additionalFilesystem
     network: network
     storagePrivateDnsZone: storagePrivateDnsZone
+    storageAccountName: storageAccountName != '' ? storageAccountName : null
     clusterInitSpecs: clusterInitSpecs
     clusterType: clusterType
     clusterSettings: clusterSettings

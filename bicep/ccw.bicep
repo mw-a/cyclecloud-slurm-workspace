@@ -24,6 +24,7 @@ param entraIdInfo types.entra_t
 param sharedFilesystem types.sharedFilesystem_t
 param additionalFilesystem types.additionalFilesystem_t 
 param network types.vnet_t 
+param storageAccountName string = 'ccwstorage${uniqueString(az.resourceGroup().id)}'
 param storagePrivateDnsZone types.storagePrivateDnsZone_t
 param clusterInitSpecs types.cluster_init_param_t
 param clusterType string
@@ -179,7 +180,7 @@ module ccwManagedIdentity 'mi.bicep' = if (!infrastructureOnly) {
   }
 }
 
-module ccwRoleAssignments './vmRoleAssignments.bicep' = if (!infrastructureOnly) {
+module ccwRoleAssignments './vmRoleAssignments.bicep' = if (!infrastructureOnly && ccVMIdentityType == 'SystemAssigned') {
   name: 'ccwRoleFor-${ccVMName}-${location}'
   scope: subscription()
   params: {
@@ -201,7 +202,7 @@ module ccwStorage './storage.bicep' = {
   params: {
     location: location
     tags: getTags('Microsoft.Storage/storageAccounts', tags)
-    saName: 'ccwstorage${uniqueString(az.resourceGroup().id)}'
+    saName: storageAccountName
     subnetId: subnets.cyclecloud.id 
     storagePrivateDnsZone: storagePrivateDnsZone
   }
