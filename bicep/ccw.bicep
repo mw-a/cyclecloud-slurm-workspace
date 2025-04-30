@@ -18,6 +18,8 @@ param ccVMName string
 param ccVMSize string
 param ccVMIdentityType types.vm_identity_type_t
 param ccVMIdentities string[]
+param nodeVMIdentityType string
+param nodeVMIdentityName string
 param resourceGroup string
 param sharedFilesystem types.sharedFilesystem_t
 param additionalFilesystem types.additionalFilesystem_t 
@@ -165,11 +167,11 @@ module ccwVM './vm.bicep' = if (!infrastructureOnly) {
   ]
 }
 
-var miName = 'ccwLockerManagedIdentity'
 module ccwManagedIdentity 'mi.bicep' = if (!infrastructureOnly) {
-  name: miName
+  name: nodeVMIdentityName
   params: {
-    name: miName
+    name: nodeVMIdentityName
+    type: nodeVMIdentityType
     location: location
     storageAccountName: ccwStorage.outputs.storageAccountName
     tags: getTags('Microsoft.ManagedIdentity/userAssignedIdentities', tags)
