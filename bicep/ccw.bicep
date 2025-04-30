@@ -19,6 +19,8 @@ param ccVMSize string
 param cyclecloudBaseImage string
 param ccVMIdentityType types.vm_identity_type_t
 param ccVMIdentities string[]
+param nodeVMIdentityType string
+param nodeVMIdentityName string
 param resourceGroup string
 param entraIdInfo types.entra_t
 param sharedFilesystem types.sharedFilesystem_t
@@ -167,11 +169,11 @@ module ccwVM './vm.bicep' = if (!infrastructureOnly) {
   ]
 }
 
-var miName = 'ccwLockerManagedIdentity'
 module ccwManagedIdentity 'mi.bicep' = if (!infrastructureOnly) {
-  name: miName
+  name: nodeVMIdentityName
   params: {
-    name: miName
+    name: nodeVMIdentityName
+    type: nodeVMIdentityType
     location: location
     storageAccountName: ccwStorage.outputs.storageAccountName
     monitoringEnabled: monitoring.type == 'enabled'

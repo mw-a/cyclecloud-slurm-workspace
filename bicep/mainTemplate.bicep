@@ -14,6 +14,8 @@ param ccVMSize string
 param cyclecloudBaseImage string = 'azurecyclecloud:azure-cyclecloud:cyclecloud8-gen2:8.8.120251212'
 param ccVMIdentityType types.vm_identity_type_t = 'SystemAssigned'
 param ccVMIdentities string[] = []
+param nodeVMIdentityType string = 'new'
+param nodeVMIdentityName string = 'ccwLockerManagedIdentity'
 param resourceGroup string
 param entraIdInfo types.entra_t = { type: 'disabled' }
 param sharedFilesystem types.sharedFilesystem_t
@@ -92,6 +94,8 @@ module makeCCWresources 'ccw.bicep' = {
     cyclecloudBaseImage: cyclecloudBaseImage
     ccVMIdentityType: ccVMIdentityType
     ccVMIdentities: ccVMIdentities
+    nodeVMIdentityType: nodeVMIdentityType
+    nodeVMIdentityName: nodeVMIdentityName
     resourceGroup: resourceGroup
     databaseAdminPassword: databaseAdminPassword
     databaseConfig: databaseConfig
