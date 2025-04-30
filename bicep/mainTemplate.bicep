@@ -13,6 +13,8 @@ param ccVMName string
 param ccVMSize string
 param ccVMIdentityType types.vm_identity_type_t = 'SystemAssigned'
 param ccVMIdentities string[] = []
+param nodeVMIdentityType string = 'new'
+param nodeVMIdentityName string = 'ccwLockerManagedIdentity'
 param resourceGroup string
 param sharedFilesystem types.sharedFilesystem_t
 param additionalFilesystem types.additionalFilesystem_t = { type: 'disabled' }
@@ -87,6 +89,8 @@ module makeCCWresources 'ccw.bicep' = {
     ccVMSize: ccVMSize
     ccVMIdentityType: ccVMIdentityType
     ccVMIdentities: ccVMIdentities
+    nodeVMIdentityType: nodeVMIdentityType
+    nodeVMIdentityName: nodeVMIdentityName
     resourceGroup: resourceGroup
     databaseAdminPassword: databaseAdminPassword
     databaseConfig: databaseConfig
