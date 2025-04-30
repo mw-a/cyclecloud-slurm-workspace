@@ -113,6 +113,9 @@ deployment_name='pid-d5d2708b-a4ef-42c0-a89b-b8bd6dd6d29b-partnercenter'
 resource_group=$(echo $mds | jq -r '.compute.resourceGroupName')
 vm_id=$(echo $mds | jq -r '.compute.vmId')
 
+subscription_id=$(echo $mds | jq -r '.compute.subscriptionId')
+az account set -s $subscription_id
+
 echo "* Waiting for deployment to complete"
 while deployment_state=$(az deployment group show -g $resource_group -n $deployment_name --query properties.provisioningState -o tsv); [ "$deployment_state" != "Succeeded" ]; do
     echo "Deployment is not yet complete (currently $deployment_state). Waiting..."
