@@ -61,7 +61,7 @@ function configure_enroot()
 
     logger -s "Creating enroot scratch directories in $ENROOT_SCRATCH_DIR"
     mkdir -pv $ENROOT_SCRATCH_DIR/{enroot-cache,enroot-data,enroot-temp,enroot-runtime,enroot-run}
-    chmod -v 777 $ENROOT_SCRATCH_DIR/{enroot-cache,enroot-data,enroot-temp,enroot-runtime,enroot-run}
+    chmod -v 1777 $ENROOT_SCRATCH_DIR/{enroot-cache,enroot-data,enroot-temp,enroot-runtime,enroot-run}
 
     # Configure enroot
     # https://github.com/NVIDIA/pyxis/wiki/Setup

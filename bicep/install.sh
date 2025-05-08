@@ -4,7 +4,7 @@ set -eo pipefail
 # this is not set if you run this manually
 export PATH=$PATH:/usr/local/bin
 ccw_root="/opt/ccw"
-mkdir -p -m 777 $ccw_root
+mkdir -p -m 755 $ccw_root
 
 # DEV USER: Set this to the path of your build
 LOCAL_PACKAGE=""
