@@ -7,10 +7,10 @@ param saName string
 param subnetId string
 param storagePrivateDnsZone storagePrivateDnsZone_t
 
-var privateDnsZoneId = storagePrivateDnsZone.?id ?? 'a0a0a0a0/bbbb/cccc/dddd/eeee/ffff/aaaa/bbbb/c8c8c8c8'
-var privateDnsZoneResourceGroup = split(privateDnsZoneId, '/')[4]
+var privateDnsZoneId = storagePrivateDnsZone.?id
+var privateDnsZoneSubscription = privateDnsZoneId != null ? split(privateDnsZoneId, '/')[2] : subscription().id
+var privateDnsZoneResourceGroup = privateDnsZoneId != null ? split(privateDnsZoneId, '/')[4] : resourceGroup().name
 var createVnetLink = storagePrivateDnsZone.type == 'existing' ? storagePrivateDnsZone.vnetLink : storagePrivateDnsZone.type == 'new'
-var vnetLinkScope = contains(storagePrivateDnsZone,'id') ? split(privateDnsZoneId, '/')[4] : az.resourceGroup().name
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   name: saName
@@ -74,12 +74,12 @@ module newBlobPrivateDnsZone 'storage-newDnsZone.bicep' = if (storagePrivateDnsZ
 
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (storagePrivateDnsZone.type == 'existing') {
   name: blobPrivateDnsZoneName
-  scope: resourceGroup(privateDnsZoneResourceGroup)
+  scope: resourceGroup(privateDnsZoneSubscription, privateDnsZoneResourceGroup)
 }
 
 module blobPrivateDnsZoneVnetLink 'storage-vnetLink.bicep' = if (createVnetLink) {
   name: 'ccwStorageBlobPrivateDnsZoneVnetLink'
-  scope: resourceGroup(vnetLinkScope)
+  scope: resourceGroup(privateDnsZoneSubscription, privateDnsZoneResourceGroup)
   params: {
     storageAccountId: storageAccount.id
     subnetId: subnetId
