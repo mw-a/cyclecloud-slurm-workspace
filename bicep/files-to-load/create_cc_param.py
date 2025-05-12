@@ -160,6 +160,9 @@ def set_pbs_params(params, outputs):
         params['AdditionalNFSMountOptions'] = outputs['filerInfoFinal']['value']['additional']['mountOptions']
         params['AdditionalNFSAddress'] = outputs['filerInfoFinal']['value']['additional']['ipAddress']
 
+    for param, value in outputs.get('additionalTemplateParams', {}).get('value', {}).items():
+        params[param] = value
+
 
 def set_ood_params(params, outputs):
     slurm_params = get_json_dict('initial_params.json')

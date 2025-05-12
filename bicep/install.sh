@@ -302,11 +302,16 @@ case "$CLUSTER_TYPE" in
 		#cyclecloud project fetch https://github.com/mw-a/cyclecloud-pbspro/tree/non-ssd cyclecloud-pbspro
 		CLUSTER_PROJ_VERSION=non-ssd
 		wget -O cyclecloud-pbspro.zip https://github.com/mw-a/cyclecloud-pbspro/archive/refs/heads/$CLUSTER_PROJ_VERSION.zip
-		dnf install -y unzip
+		dnf install -y unzip patch
 		unzip -o cyclecloud-pbspro.zip
 		pushd cyclecloud-pbspro-$CLUSTER_PROJ_VERSION
 		./build.sh
 		cyclecloud project upload azure-storage
+
+		# add AD support
+		wget -O adauth.patch https://raw.githubusercontent.com/mw-a/cyclecloud-adauth/ccw-extra-cluster-init/templates/openpbs.patch
+		patch templates/openpbs.txt < adauth.patch
+
 		cyclecloud import_template -c OpenPBS -f templates/openpbs.txt ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
 		popd
 		(python3 create_cc_param.py pbs) > cluster_params.json

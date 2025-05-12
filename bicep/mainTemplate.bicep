@@ -41,6 +41,7 @@ param databaseConfig types.databaseConfig_t = { type: 'disabled' }
 param clusterName string = 'ccw'
 param acceptMarketplaceTerms bool = false
 param ood types.oodConfig_t = { type: 'disabled' }
+param additionalTemplateParams object = {}
 
 param infrastructureOnly bool = false
 param insidersBuild bool = false
@@ -111,5 +112,6 @@ module makeCCWresources 'ccw.bicep' = {
     cyclecloudBaseImage: cyclecloudBaseImage
     osDiskSku: osDiskSku
     diskSku: diskSku
+    additionalTemplateParams: additionalTemplateParams
   }
 }
