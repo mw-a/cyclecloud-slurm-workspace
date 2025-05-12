@@ -37,7 +37,7 @@
     "NumberLoginNodes": 0,
     "PBSVersion": "20.0.1-0",
     "Region": "eastus",
-    "ReturnProxy": true,
+    "ReturnProxy": false,
     "SchedDiskStorageSKU": "Premium_LRS",
     "SchedFilesystemSize": 1000,
     "SchedulerImageName": "almalinux8",
