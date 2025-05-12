@@ -34,6 +34,9 @@ param htc types.htc_t
 param hpc types.hpc_t
 param gpu types.hpc_t
 param execute types.execute_t
+param nodeNameIsHostname bool
+param nodeNamePrefix string
+param schedulerHostname string
 param tags types.resource_tags_t
 @secure()
 param databaseAdminPassword string
@@ -406,3 +409,7 @@ output ood object = union(ood, {
   clientId: deployOOD ? registerOODApp ? oodApp.outputs.oodClientAppId : ood.?appId : ''
   tenantId: deployOOD ? subscription().tenantId : ''
 })
+
+output nodeNameIsHostname bool = nodeNameIsHostname
+output nodeNamePrefix string = nodeNamePrefix
+output schedulerHostname string = schedulerHostname

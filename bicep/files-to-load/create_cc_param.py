@@ -111,6 +111,8 @@ def set_pbs_params(params, outputs):
     params['UseLowPrio'] = outputs['partitions']['value']['execute']['useSpot']
     if outputs.get('schedulerNode', {}).get('value', {}).get('publicIp'):
         params['ExecuteNodesPublic'] = outputs['partitions']['value']['execute']['publicIp']
+    params['NodeNameIsHostname'] = outputs['nodeNameIsHostname']['value']
+    params['NodeNamePrefix'] = outputs['nodeNamePrefix']['value']
 
     #scheduler node
     params['serverMachineType'] = outputs['schedulerNode']['value']['sku']
@@ -124,6 +126,7 @@ def set_pbs_params(params, outputs):
         params['SchedDiskStorageSKU'] = outputs['schedulerNode']['value']['schedDiskStorageSKU']
     if outputs.get('schedulerNode', {}).get('value', {}).get('schedCapacityInGb'):
         params['SchedFilesystemSize'] = outputs['schedulerNode']['value']['schedCapacityInGb']
+    params['ServerHostname'] = outputs['schedulerHostname']['value']
 
     #login node(s)
     params['NumberLoginNodes'] = int(outputs['loginNodes']['value']['initialNodes'])
