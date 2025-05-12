@@ -46,6 +46,7 @@ param clusterName string
 param manualInstall bool
 param acceptMarketplaceTerms bool
 param ood types.oodConfig_t
+param additionalTemplateParams object
 
 var anfDefaultMountOptions = 'rw,hard,rsize=262144,wsize=262144,vers=3,tcp,_netdev,nconnect=8'
 
@@ -437,3 +438,4 @@ output files object = {
 output nodeNameIsHostname bool = nodeNameIsHostname
 output nodeNamePrefix string = nodeNamePrefix
 output schedulerHostname string = schedulerHostname
+output additionalTemplateParams object = additionalTemplateParams
