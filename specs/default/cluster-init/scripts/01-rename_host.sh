@@ -60,6 +60,6 @@ function check_host_renaming() {
   fi
 }
 
-if is_compute; then
+if ! is_pbs && is_compute; then
   check_host_renaming
 fi
