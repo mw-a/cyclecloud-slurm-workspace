@@ -334,7 +334,7 @@ output managedIdentityId string = infrastructureOnly ? '' : ccwManagedIdentity.o
 
 var ccwClusterInitSpec = {
   type: 'gitHubReleaseURL'
-  gitHubReleaseURL: uri('https://github.com/Azure/cyclecloud-slurm-workspace/releases/tag/', projectVersion)
+  gitHubReleaseURL: uri('https://github.com/mw-a/cyclecloud-slurm-workspace/releases/tag/', projectVersion)
   spec: 'default'
   target: clusterType == 'slurm'
     ? ['login', 'scheduler', 'htc', 'hpc', 'gpu', 'dynamic']
