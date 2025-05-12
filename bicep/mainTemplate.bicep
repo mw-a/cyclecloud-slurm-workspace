@@ -44,6 +44,7 @@ param clusterName string = 'ccw'
 param acceptMarketplaceTerms bool = false
 param ood types.oodConfig_t = { type: 'disabled' }
 param monitoring types.monitoring_t = { type: 'disabled' }
+param additionalTemplateParams object = {}
 
 param infrastructureOnly bool = false
 param insidersBuild bool = false
@@ -116,5 +117,6 @@ module makeCCWresources 'ccw.bicep' = {
     monitoring: monitoring
     osDiskSku: osDiskSku
     diskSku: diskSku
+    additionalTemplateParams: additionalTemplateParams
   }
 }

@@ -102,6 +102,9 @@ def set_slurm_params(params, dbPassword, outputs):
     params['configuration_identity_client_id'] = outputs['monitoring']['value']['managedIdentityClientId'] if params['configuration_monitoring_enabled'] else None
     params['configuration_ingestion_endpoint'] = outputs['monitoring']['value']['ingestionEndpoint'] if params['configuration_monitoring_enabled'] else None
 
+    for param, value in outputs.get('additionalTemplateParams', {}).get('value', {}).items():
+        params[param] = value
+
 
 def set_pbs_params(params, outputs):
     params['Region'] = outputs['location']['value']
@@ -165,6 +168,9 @@ def set_pbs_params(params, outputs):
         params['AdditionalNFSExportPath'] = outputs['filerInfoFinal']['value']['additional']['exportPath']
         params['AdditionalNFSMountOptions'] = outputs['filerInfoFinal']['value']['additional']['mountOptions']
         params['AdditionalNFSAddress'] = outputs['filerInfoFinal']['value']['additional']['ipAddress']
+
+    for param, value in outputs.get('additionalTemplateParams', {}).get('value', {}).items():
+        params[param] = value
 
 
 def set_ood_params(params, outputs):
