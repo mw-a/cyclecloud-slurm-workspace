@@ -22,6 +22,9 @@ function install_enroot() {
                 chmod 755 enroot-check_*.run
                 ./enroot-check_*.run --verify
 
+                # enroot needs parallel from EPEL
+                dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
                 yum install -y https://github.com/NVIDIA/enroot/releases/download/v${ENROOT_VERSION}/enroot-${ENROOT_VERSION}-1.el8.${arch}.rpm
                 yum install -y https://github.com/NVIDIA/enroot/releases/download/v${ENROOT_VERSION}/enroot+caps-${ENROOT_VERSION}-1.el8.${arch}.rpm
                 ;;
