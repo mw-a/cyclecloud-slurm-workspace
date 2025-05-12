@@ -29,6 +29,9 @@ param htc types.htc_t = { maxNodes: 0, osImage: '', sku: '' }
 param hpc types.hpc_t = { maxNodes: 0, osImage: '', sku: '' }
 param gpu types.hpc_t = { maxNodes: 0, osImage: '', sku: '' }
 param execute types.execute_t = { maxCores: 0, osImage: '', sku: '', useSpot: false }
+param nodeNameIsHostname bool = false
+param nodeNamePrefix string = ''
+param schedulerHostname string = ''
 param tags types.resource_tags_t 
 @secure()
 param databaseAdminPassword string = ''
@@ -84,6 +87,9 @@ module makeCCWresources 'ccw.bicep' = {
     hpc: hpc
     gpu: gpu
     execute: execute
+    nodeNameIsHostname: nodeNameIsHostname
+    nodeNamePrefix: nodeNamePrefix
+    schedulerHostname: schedulerHostname
     storedKey: storedKey
     ccVMName: ccVMName
     ccVMSize: ccVMSize
