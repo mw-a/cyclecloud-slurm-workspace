@@ -308,9 +308,17 @@ case "$CLUSTER_TYPE" in
 		./build.sh
 		cyclecloud project upload azure-storage
 
+		# add DNS support
+		wget -O dns.patch https://raw.githubusercontent.com/mw-a/cyclecloud-dns/main/templates/openpbs.patch
+		patch templates/openpbs.txt < dns.patch
+
 		# add AD support
 		wget -O adauth.patch https://raw.githubusercontent.com/mw-a/cyclecloud-adauth/ccw-extra-cluster-init/templates/openpbs.patch
 		patch templates/openpbs.txt < adauth.patch
+
+		# add SSH support
+		wget -O ssh.patch https://raw.githubusercontent.com/mw-a/cyclecloud-ssh/main/templates/openpbs.patch
+		patch templates/openpbs.txt < ssh.patch
 
 		cyclecloud import_template -c OpenPBS -f templates/openpbs.txt ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
 		popd
