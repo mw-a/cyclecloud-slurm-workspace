@@ -308,6 +308,9 @@ case "$CLUSTER_TYPE" in
 		./build.sh
 		cyclecloud project upload azure-storage
 
+		pbs_proj_version=$(grep "^version[[:space:]]*=" project.ini | cut -d= -f2 | sed -e "s,^[[:space:]]*,," -e "s,[[:space:]]*$,,")
+		sed -i -e "s/\\(\\[*cluster-init[^]]*\\)\\]/\\1:$pbs_proj_version]/" -e 's/cyclecloud\/pbspro/pbspro/g' templates/openpbs.txt
+
 		# add DNS support
 		wget -O dns.patch https://raw.githubusercontent.com/mw-a/cyclecloud-dns/main/templates/openpbs.patch
 		patch templates/openpbs.txt < dns.patch
