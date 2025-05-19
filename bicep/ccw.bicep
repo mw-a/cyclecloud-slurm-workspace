@@ -342,12 +342,12 @@ var ccwClusterInitSpec = {
     : clusterType == 'pbs' ? ['scheduler', 'execute'] : []
 }
 
-var pyxisClusterInitSpec = {
+var pyxisClusterInitSpec = clusterType == 'slurm' ? {
   type: 'gitHubReleaseURL'
   gitHubReleaseURL: uri('https://github.com/Azure/cyclecloud-pyxis/releases/tag/', pyxisProjectVersion)
   spec: 'default'
   target: ['login', 'scheduler', 'htc', 'hpc', 'gpu', 'dynamic']
-}
+} : {}
 
 // Projects <= 2025.02.06 have the pyxis logic embedded in the ccw cluster init spec
 var requiredClusterInitSpecs = [ccwClusterInitSpec, pyxisClusterInitSpec]
