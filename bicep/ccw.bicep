@@ -350,7 +350,7 @@ var pyxisClusterInitSpec = {
 }
 
 // Projects <= 2025.02.06 have the pyxis logic embedded in the ccw cluster init spec
-var requiredClusterInitSpecs = [ccwClusterInitSpec, pyxisClusterInitSpec]
+var requiredClusterInitSpecs = clusterType == 'slurm' ? [ccwClusterInitSpec, pyxisClusterInitSpec] : [ccwClusterInitSpec]
 
 output clusterInitSpecs types.cluster_init_param_t = union(requiredClusterInitSpecs, clusterInitSpecs)
 
