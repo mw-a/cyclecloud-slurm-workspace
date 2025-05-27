@@ -327,6 +327,10 @@ case "$CLUSTER_TYPE" in
 		wget -O ssh.patch https://raw.githubusercontent.com/mw-a/cyclecloud-ssh/main/templates/openpbs.patch
 		patch templates/openpbs.txt < ssh.patch
 
+		# add local scheduler parameter support
+		wget -O local-scheduler.patch https://raw.githubusercontent.com/mw-a/cyclecloud-local-scheduler/main/templates/openpbs.patch
+		patch templates/openpbs.txt < local-scheduler.patch
+
 		cyclecloud import_template -c OpenPBS -f templates/openpbs.txt ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
 		popd
 		(python3 create_cc_param.py pbs) > cluster_params.json
