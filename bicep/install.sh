@@ -331,6 +331,10 @@ case "$CLUSTER_TYPE" in
 		wget -O ef.patch https://raw.githubusercontent.com/mw-a/cyclecloud-ef/main/templates/openpbs.patch
 		patch templates/openpbs.txt < ef.patch
 
+		# add samba support
+		wget -O samba.patch https://raw.githubusercontent.com/mw-a/cyclecloud-samba/main/templates/openpbs.patch
+		patch templates/openpbs.txt < samba.patch
+
 		cyclecloud import_template -c OpenPBS -f templates/openpbs.txt ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
 		popd
 		(python3 create_cc_param.py pbs) > cluster_params.json
