@@ -31,7 +31,9 @@ type shared_nfs_existing_t = {
 type shared_anf_new_t = {
   type: 'anf-new'
   anfServiceTier: string
+  anfQosType: string?
   anfCapacityInTiB: int
+  anfCustomThroughputMibps: int?
   availabilityZone:  availabilityZone_t[]?
 }
 

@@ -263,6 +263,8 @@ module ccwANF 'anf.bicep' = [
       subnetId: subnets[filer.key].id
       serviceLevel: filer.value.anfServiceTier
       sizeTiB: filer.value.anfCapacityInTiB
+      qosType: filer.value.?anfQosType ?? 'Auto'
+      customThroughputMibps: filer.value.?anfCustomThroughputMibps ?? 2*128*filer.value.anfCapacityInTiB
       defaultMountOptions: anfDefaultMountOptions
       availabilityZone:  filer.value.?availabilityZone ?? []
       infrastructureOnly: infrastructureOnly

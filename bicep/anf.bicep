@@ -11,13 +11,15 @@ param serviceLevel string
 param sizeTiB int
 param defaultMountOptions string
 param infrastructureOnly bool = false
+param qosType string = 'Auto'
+param customThroughputMibps int = 5 * 128 * sizeTiB
 var capacity = sizeTiB * 1024 * 1024 * 1024 * 1024
 
-resource anfAccount 'Microsoft.NetApp/netAppAccounts@2024-07-01' existing = if(!infrastructureOnly){
+resource anfAccount 'Microsoft.NetApp/netAppAccounts@2025-09-01' existing = if(!infrastructureOnly){
   name: 'hpcanfaccount-${take(resourcePostfix,10)}'
 }
 
-resource anfPool 'Microsoft.NetApp/netAppAccounts/capacityPools@2024-07-01' = if(!infrastructureOnly){
+resource anfPool 'Microsoft.NetApp/netAppAccounts/capacityPools@2025-09-01' = if(!infrastructureOnly){
   name: '${name}-anf-pool'
   location: location
   tags: tags
@@ -25,10 +27,12 @@ resource anfPool 'Microsoft.NetApp/netAppAccounts/capacityPools@2024-07-01' = if
   properties: {
     serviceLevel: serviceLevel
     size: capacity
+    qosType: serviceLevel == 'Flexible' ? 'Manual' : qosType
+    customThroughputMibps: serviceLevel == 'Flexible' ? customThroughputMibps : null
   }
 }
 
-resource anfVolume 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes@2024-07-01' = if(!infrastructureOnly){
+resource anfVolume 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes@2025-09-01' = if(!infrastructureOnly){
   name: '${name}-anf-volume'
   location: location
   tags: tags
@@ -43,6 +47,7 @@ resource anfVolume 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes@2024-0
     protocolTypes: ['NFSv3']
     securityStyle: 'unix'
     usageThreshold: capacity
+    throughputMibps: customThroughputMibps
 
     exportPolicy: {
       rules: [
