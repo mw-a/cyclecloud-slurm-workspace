@@ -298,7 +298,23 @@ done
 # needs to be done after initialization, as we now call fetch/upload
 case "$CLUSTER_TYPE" in
 	slurm)
+		dnf install -y patch
+
+		# add DNS support
+		wget -O dns.patch https://raw.githubusercontent.com/mw-a/cyclecloud-dns/main/templates/slurm.patch
+		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < dns.patch
+
+		# add AD support
+		wget -O adauth.patch https://raw.githubusercontent.com/mw-a/cyclecloud-adauth/ccw-extra-cluster-init/templates/slurm.patch
+		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < adauth.patch
+
+		# add SSH support
+		wget -O ssh.patch https://raw.githubusercontent.com/mw-a/cyclecloud-ssh/main/templates/slurm.patch
+		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < ssh.patch
+
 		CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
+		cyclecloud import_template -c Slurm -f "${HOME_CLUSTER_DIR}/slurm_template.txt" ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
+
 		(python3 create_cc_param.py slurm --dbPassword="${DATABASE_ADMIN_PASSWORD}") > cluster_params.json
 		;;
 
