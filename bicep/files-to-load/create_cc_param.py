@@ -77,6 +77,10 @@ def set_slurm_params(params, dbPassword, outputs):
     #Execute node tags
     params['NodeTags'] = outputs['nodeArrayTags']['value']
 
+    params['NodeNameIsHostname'] = outputs['nodeNameIsHostname']['value']
+    params['NodeNamePrefix'] = outputs['nodeNamePrefix']['value']
+    params['SchedulerHostName'] = outputs['schedulerHostname']['value']
+
     #Network Attached Storage
     params['UseBuiltinShared'] = outputs['filerInfoFinal']['value']['home']['type'] == 'nfs-new' 
     if params['UseBuiltinShared']:
