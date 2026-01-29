@@ -409,6 +409,46 @@ sleep 2
 echo Waiting for accelerated network records to be imported
 timeout 360s bash -c 'until (! ls /opt/cycle_server/config/data/*.txt); do sleep 10; done'
 
+# patch jetpack
+dnf install -y python3.12-wheel
+for archive in /opt/cycle_server/work/staging/jetpack/*/jetpack-*-linux*.tar.gz ; do
+	jpd="$(mktemp -d)"
+	pushd "$jpd"
+	tar -xf "$archive"
+
+	# avoid hang on RHEL 8.x-based systems
+	sed -i -e "s,udevadm trigger --settle,(udevadm trigger \&\& udevadm settle)," \
+		jetpack/system/procedures/startup/init.sh
+
+	# speed up spec inspection on node bootstrap
+	wheeldir="$jpd"/jetpack/system/install/wheels
+	for whl in "$wheeldir"/jetpack-*.whl ; do
+		whld="$(mktemp -d)"
+		pushd "$whld"
+		wheel-3.12 unpack "$whl"
+
+		base64 -d <<-EOF | gunzip | patch jetpack-*/jetpack/cluster_init/__init__.py
+			H4sIAAole2kAA5VTy27bMBA8V1+xTQ+SoUcs2alTAQIM+FDk0kt6KwKCJle2UpkUSApu/r4kJTeR
+			0yAOD6awj5nxcDdNU3hE01H2+5q1vTaoSCMac038RUjWPX0q5sVNOi/SPIciLxer8maZzU8HYvcb
+			xHF8KdAqXeSQ5+VyWRa3Fujb1/nqNl+NQOs1pItFkeQLiN1dzGG9DiAAd77AdzRA2xZkDWaPoDtk
+			GvAPw874gBQIgh6QA3tiLbJW9jyxmUb7lL2EhFaKHSoQiBx5BncG9F72LRehgS1CR7W2AI04kW57
+			D64QmCtzNRQY1QhHH6UCZMst4sZxbhynY9KGKtOInS0WeLTp0aAgdbCD9Ap+bQa77qxN9zYWuURi
+			NVJOaiUP5EBFU6M21U/V4wxqqXyv1TdiNLX/yHZoorBT8hGZCRMIw1nWSssbzeBzBVfPhlw9DBJs
+			41hOnGflEJ2I80xvU75sh6qawD08w9nyM4KPkJzAB9DYtXJ5FM4h5OQfyph6hVMO8VHHe05VU6de
+			NLvDpLAv2qMdSP9XFJpejTwTmokxfuoM/HATSAW/5LWm7/J/DfGE8TImb9drugtpzm3PaNeh4NHH
+			Rnh2ghzdO0d12x4AxxqIVc1Qa8L2WBO7Tlu7+5FWjPBG2bUeAglwbYZI7fdwVkLwF0Mz1rbaBAAA
+		EOF
+
+		wheel-3.12 pack --dest-dir "$wheeldir" jetpack-*
+		popd
+		rm -rf "$whld"
+	done
+
+	tar -czf "$archive" *
+	popd
+	rm -rf "$jpd"
+done
+
 START_MAIN_CLUSTER=$(jq -r .clusterSettings.value.startCluster ccwOutputs.json)
 if [ "$START_MAIN_CLUSTER" == "true" ]; then
     cyclecloud start_cluster "$MAIN_CLUSTER_NAME"
