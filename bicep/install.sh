@@ -322,6 +322,10 @@ case "$CLUSTER_TYPE" in
 		wget -O ssh.patch https://raw.githubusercontent.com/mw-a/cyclecloud-ssh/main/templates/slurm.patch
 		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < ssh.patch
 
+		# add local scheduler parameter support
+		wget -O local-scheduler.patch https://raw.githubusercontent.com/mw-a/cyclecloud-local-scheduler/main/templates/slurm.patch
+		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < local-scheduler.patch
+
 		CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
 		cyclecloud import_template -c Slurm -f "${HOME_CLUSTER_DIR}/slurm_template.txt" ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
 
