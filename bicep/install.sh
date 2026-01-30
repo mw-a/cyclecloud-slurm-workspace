@@ -266,6 +266,16 @@ chown cycle_server:cycle_server /tmp/ccw_site_id.txt
 chmod 664 /tmp/ccw_site_id.txt
 mv /tmp/ccw_site_id.txt /opt/cycle_server/config/data/ccw_site_id.txt
 
+# Disable local user creation on nodes
+cat > /tmp/ccw_no_auth.txt <<EOF
+AdType = "Application.Setting"
+Name = "cyclecloud.default_authenticator"
+Value = ""
+EOF
+chown cycle_server:cycle_server /tmp/ccw_no_auth.txt
+chmod 664 /tmp/ccw_no_auth.txt
+mv /tmp/ccw_no_auth.txt /opt/cycle_server/config/data/ccw_no_auth.txt
+
 echo Waiting for records to be imported
 timeout 360s bash -c 'until (! ls /opt/cycle_server/config/data/*.txt 2> /dev/null); do sleep 10; done'
 
