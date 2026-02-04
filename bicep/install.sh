@@ -308,26 +308,42 @@ done
 # needs to be done after initialization, as we now call fetch/upload
 case "$CLUSTER_TYPE" in
 	slurm)
-		dnf install -y patch
+		dnf install -y podman unzip patch git
+
+		CLUSTER_PROJ_VERSION=pcpu
+		# slurm project with configurable use_pcpu
+		wget -O cyclecloud-slurm.zip https://github.com/mw-a/cyclecloud-slurm/archive/refs/heads/$CLUSTER_PROJ_VERSION.zip
+		unzip -o cyclecloud-slurm.zip
+		# scalelib with updated vm_sizes.json
+		wget -O cyclecloud-scalelib.zip https://github.com/mw-a/cyclecloud-scalelib/archive/refs/heads/vm-sizes.zip
+		unzip -o cyclecloud-scalelib.zip
+		pushd cyclecloud-slurm-$CLUSTER_PROJ_VERSION
+		./docker-package.sh ../cyclecloud-scalelib-vm-sizes
+		cyclecloud project upload azure-storage
+
+		slurm_proj_version=$(grep "^version[[:space:]]*=" project.ini | cut -d= -f2 | sed -e "s,^[[:space:]]*,," -e "s,[[:space:]]*$,,")
+		sed -i -e "s/\\(\\[*cluster-init slurm:[^]]*:\\)[^]]*\\]/\\1:$slurm_proj_version]/" -e 's/cyclecloud\/slurm/slurm/g' templates/slurm.txt
 
 		# add DNS support
 		wget -O dns.patch https://raw.githubusercontent.com/mw-a/cyclecloud-dns/main/templates/slurm.patch
-		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < dns.patch
+		patch templates/slurm.txt < dns.patch
 
 		# add AD support
 		wget -O adauth.patch https://raw.githubusercontent.com/mw-a/cyclecloud-adauth/ccw-extra-cluster-init/templates/slurm.patch
-		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < adauth.patch
+		patch templates/slurm.txt < adauth.patch
 
 		# add SSH support
 		wget -O ssh.patch https://raw.githubusercontent.com/mw-a/cyclecloud-ssh/main/templates/slurm.patch
-		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < ssh.patch
+		patch templates/slurm.txt < ssh.patch
 
 		# add local scheduler parameter support
 		wget -O local-scheduler.patch https://raw.githubusercontent.com/mw-a/cyclecloud-local-scheduler/main/templates/slurm.patch
-		patch "${HOME_CLUSTER_DIR}/slurm_template.txt" < local-scheduler.patch
+		patch templates/slurm.txt < local-scheduler.patch
 
-		CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
-		cyclecloud import_template -c Slurm -f "${HOME_CLUSTER_DIR}/slurm_template.txt" ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
+		#CLUSTER_PROJ_VERSION=$(cycle_server execute --format json 'SELECT Version FROM Cloud.Project WHERE Name=="'$CLUSTER_PROJ_NAME'"' | jq -r '.[0].Version')
+		#cyclecloud import_template -c Slurm -f "${HOME_CLUSTER_DIR}/slurm_template.txt" ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
+		cyclecloud import_template -c Slurm -f templates/slurm.txt ${CLUSTER_PROJ_NAME}_template_${CLUSTER_PROJ_VERSION} --force
+		popd
 
 		(python3 create_cc_param.py slurm --dbPassword="${DATABASE_ADMIN_PASSWORD}") > cluster_params.json
 		;;
