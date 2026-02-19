@@ -450,6 +450,30 @@ for archive in /opt/cycle_server/work/staging/jetpack/*/jetpack-*-linux*.tar.gz 
 	sed -i -e "s,udevadm trigger --settle,(udevadm trigger \&\& udevadm settle)," \
 		jetpack/system/procedures/startup/init.sh
 
+	# correctly label new tmp dir if nvme is present
+	sed -i -e 's,setup_tmp_directory "$new_tmp_dir",setup_tmp_directory "$new_tmp_dir" ; semanage fcontext -a -e "$original_tmp" "$new_tmp_dir" ; restorecon -v "$new_tmp_dir",' \
+		jetpack/system/procedures/mount/mount_tmp.sh
+
+	# supply nvme device nodes for chef cvolume recipe as well
+	base64 -d <<-EOF | gunzip | patch jetpack/system/procedures/startup/80-azure-disk.rules
+		H4sIAPXklmkAA8WXbW/aOhTHX18+xVFuq603OI+Mciuhla1oQgNaAa3u9iZyHEMtgs21E7bctt99
+		TkIrTQG60vYuLwzi+PzPLz7HPgYhBC0H4f9SSVHE1NySaUyVJSSb/eE5XhM5HnJdcBsnXuOk4VvH
+		jvPO1wYXTEc/NdM0NwlUfR3Xara0r+M5f699T08BuY2664BZfpye1qAzmYzGNxFdMUIDFt2128Z7
+		Z/2gYvjLqEN3eHXT+Xo56gZnvfHnYPLlonvXNoTSpk/nk/O2UQAFOVCgskXM+NyoFV5n3atydttY
+		YpmwhAmuvS5G559GnUHbsEPGbXUNiMAbSXGUu4KtMmWTGCtlh7Egc/twbluWXVLekjQBFJ0Amjbe
+		VNn6l0ONdiCpSuOkCpEj7hV/n+Bow+reTFuhf9xyMXJpy0ONlttC2CU+avpRy2lS4r4Lw7st0m3D
+		2Z2NjTw7s7SLMXwi45okwgneOyb5DTGjV4ppvl7+pziUjASKKBYQwRMp4phKDZX/8uJFsutFnlck
+		j76LuzfY8yrpUTBvb7DnldujYP5OsBr8CZeKgqEPKZFKQg1IsiWFqZCgzzocw/jjuAchJTjV05RY
+		ULgagJqnCsR0SiUMrwZ0PTWXVsA44CgqjnZIBOBS4V6/mFQHas0s6I9XPkzxgsWZlYNMrpnSUjNG
+		QH/BcX4CZ7neN6xp0+94RnkCRYuDUJ+837RauowZwQkFlsA1lbQIuRIsAswh5ZwSqhSWGUR0SXlE
+		OcmKl8M8E5xqrH9TJhmfaX+r6Im+Vz8Gsxh1R6xBv/Oh2/9p8fhqQQNJFyKhwco17rsmV2Ve3Sd2
+		yEKORQ9n0r3O++2tdp37atuium9Rci3g4ODt20NVaiHv6Ojx7mQ+Nfov7dUXRdyajHz1YAN/b3Bx
+		PprcLKWYSbzQUnaqpK1ylPLOlHsjXSsIpXpvGkUBNPx6E0w9FgWw5cawcWXyDN/eF/qtFCLRM8df
+		Bv3e8LNZupZx7QPKVxX/rdeTLcE2pag3POv+82D89dh2mCGmt8f3irlUfAm2dc/agyxOecWYq+mq
+		/Z+othS6rck2gz1/uYadQXfP9eJ4UbUWei8BNu6Oep3+nmiKSobjin2tuftvwmtsOpQHOORG7QeR
+		65tNjQ0AAA==
+	EOF
+
 	# speed up spec inspection on node bootstrap
 	wheeldir="$jpd"/jetpack/system/install/wheels
 	for whl in "$wheeldir"/jetpack-*.whl ; do
